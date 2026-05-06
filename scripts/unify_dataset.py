@@ -14,6 +14,9 @@ Uso:
   cd tuia-face-recognition-app
   python scripts/unificar_dataset.py
 
+  # Filtrar archive.zip por identidades con más de X imágenes
+  python scripts/unificar_dataset.py --archive-min-images 20
+
   # Carpeta con los ZIPs: la del repo (relativa), no /data del sistema
   python scripts/unificar_dataset.py --data-dir ./data
 
@@ -56,16 +59,39 @@ def unique_dst(base: Path) -> Path:
     raise RuntimeError(f"No se pudo generar nombre único para {base}")
 
 
-def merge_lfw_from_archive_zip(zpath: Path, out_root: Path, prefix: str = "lfw") -> int:
-    n = 0
+def merge_lfw_from_archive_zip(
+    zpath: Path,
+    out_root: Path,
+    prefix: str = "lfw",
+    min_images_per_person: int = 0,
+) -> int:
+    """
+    Copia imágenes desde archive.zip respetando un mínimo por identidad.
+
+    Regla: se incluye una identidad solo si tiene STRICTAMENTE más de X imágenes
+    dentro del ZIP (`count > min_images_per_person`).
+    """
+    jpg_entries: list[tuple[str, str]] = []
+    per_person_count: dict[str, int] = {}
+
     with zipfile.ZipFile(zpath) as z:
         for name in z.namelist():
             if not name.lower().endswith(".jpg"):
                 continue
             parts = Path(name).parts
-            if len(parts) >= 2:
-                person = parts[-2]
-            else:
+            if len(parts) < 2:
+                continue
+            person = parts[-2]
+            jpg_entries.append((name, person))
+            per_person_count[person] = per_person_count.get(person, 0) + 1
+
+        allowed_people = {
+            person for person, count in per_person_count.items() if count > min_images_per_person
+        }
+
+        n = 0
+        for name, person in jpg_entries:
+            if person not in allowed_people:
                 continue
             rel = f"{prefix}_{safe_id(person)}"
             data = z.read(name)
@@ -137,6 +163,15 @@ def parse_args() -> argparse.Namespace:
         help="Ruta a archive.zip (default: <data-dir>/archive.zip)",
     )
     p.add_argument(
+        "--archive-min-images",
+        type=int,
+        default=0,
+        help=(
+            "Para archive.zip: incluir solo carpetas/identidades con más de X imágenes "
+            "(regla estricta: count > X). Default: 0."
+        ),
+    )
+    p.add_argument(
         "--faces-zip",
         type=Path,
         default=None,
@@ -198,7 +233,11 @@ def main() -> None:
 
     total = 0
     if archive_zip.is_file():
-        total += merge_lfw_from_archive_zip(archive_zip, out)
+        total += merge_lfw_from_archive_zip(
+            archive_zip,
+            out,
+            min_images_per_person=max(0, args.archive_min_images),
+        )
     else:
         print(f"[skip] no existe: {archive_zip}")
 
