@@ -2,7 +2,7 @@
 """
 Fase 2: embeddings a partir del dataset unificado (ImageFolder-like).
 
-Lee:   <data-dir>/unified/<etiqueta>/*.jpg  (salida de scripts/unificar_dataset.py)
+Lee:   <data-dir>/unified/<etiqueta>/*.jpg  (salida de scripts/unify_dataset.py)
 Escribe: JSON lista de registros compatibles con EmbeddingStore / EmbeddingRecord.
 
 Uso:
@@ -142,7 +142,7 @@ def main() -> None:
     if not input_dir.is_dir():
         print(
             f"Error: no existe la carpeta unificada:\n  {input_dir}\n\n"
-            "Primero ejecutá:\n  python scripts/unificar_dataset.py\n",
+            "Primero ejecutá:\n  python scripts/unify_dataset.py\n",
             file=sys.stderr,
         )
         sys.exit(1)
