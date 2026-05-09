@@ -12,15 +12,15 @@ Opcional: --include-public-faces para mezclar también data/public_faces/ (no fo
 
 Uso:
   cd tuia-face-recognition-app
-  python scripts/unificar_dataset.py
+  python scripts/unify_dataset.py
 
   # Filtrar archive.zip por identidades con más de X imágenes
-  python scripts/unificar_dataset.py --archive-min-images 20
+  python scripts/unify_dataset.py --archive-min-images 20
 
   # Carpeta con los ZIPs: la del repo (relativa), no /data del sistema
-  python scripts/unificar_dataset.py --data-dir ./data
+  python scripts/unify_dataset.py --data-dir ./data
 
-  python scripts/unificar_dataset.py --data-dir /ruta/absoluta/al/repo/data --out-dir /ruta/salida
+  python scripts/unify_dataset.py --data-dir /ruta/absoluta/al/repo/data --out-dir /ruta/salida
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ from pathlib import Path
 
 
 def repo_root() -> Path:
-    # scripts/unificar_dataset.py -> parents[1] == raíz del repo
+    # scripts/unify_dataset.py -> parents[1] == raíz del repo
     return Path(__file__).resolve().parents[1]
 
 
@@ -63,12 +63,12 @@ def merge_lfw_from_archive_zip(
     zpath: Path,
     out_root: Path,
     prefix: str = "lfw",
-    min_images_per_person: int = 0,
+    min_images_per_person: int = 20,
 ) -> int:
     """
     Copia imágenes desde archive.zip respetando un mínimo por identidad.
 
-    Regla: se incluye una identidad solo si tiene STRICTAMENTE más de X imágenes
+    Regla: se incluye una identidad solo si tiene ESTRICTAMENTE más de X imágenes
     dentro del ZIP (`count > min_images_per_person`).
     """
     jpg_entries: list[tuple[str, str]] = []
@@ -206,9 +206,9 @@ def main() -> None:
             f"Error: --data-dir no es una carpeta existente:\n  {data_dir}\n\n"
             "Suele confundirse `/data/` (raíz del sistema) con la carpeta `data/` del proyecto.\n"
             "Ejemplos correctos:\n"
-            f"  python scripts/unificar_dataset.py\n"
-            f"  python scripts/unificar_dataset.py --data-dir ./data\n"
-            f"  python scripts/unificar_dataset.py --data-dir {repo_root() / 'data'}\n",
+            f"  python scripts/unify_dataset.py\n"
+            f"  python scripts/unify_dataset.py --data-dir ./data\n"
+            f"  python scripts/unify_dataset.py --data-dir {repo_root() / 'data'}\n",
             file=sys.stderr,
         )
         sys.exit(1)
